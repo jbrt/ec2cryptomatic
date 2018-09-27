@@ -16,6 +16,9 @@ stream_handler = logging.StreamHandler()
 stream_handler.setLevel(logging.DEBUG)
 logger.addHandler(stream_handler)
 
+def parseBoolString(inputString):
+    "Return 0 for FALSE or 1 for TRUE"
+    return(inputString[0].upper()=='T')
 
 class EC2Cryptomatic(object):
     """ Encrypt EBS volumes from an EC2 instance """
@@ -56,14 +59,18 @@ class EC2Cryptomatic(object):
         if self._instance.state['Name'] != 'stopped':
             raise TypeError('Instance still running ! please stop it.')
 
-    def _cleanup(self, device):
+    def _cleanup(self, device, preserve_unencrypted):
         """ Delete the temporary objects
             :param device: the original device to delete
         """
 
         self._logger.info('->Cleanup of resources')
         self._wait_volume.wait(VolumeIds=[device.id])
-        device.delete()
+        if not(preserve_unencrypted):
+            self._logger.info('-->Deleting unencrypted volume %s' % device.id)
+            device.delete()
+        else:
+            self._logger.info('-->Preserving unencrypted volume %s' % device.id)
         self._snapshot.delete()
         self._encrypted.delete()
 
@@ -119,7 +126,7 @@ class EC2Cryptomatic(object):
         self._wait_snapshot.wait(SnapshotIds=[snapshot.id])
         return snapshot
 
-    def start_encryption(self):
+    def start_encryption(self, preserve_unencrypted):
         """ Launch encryption process """
 
         self._logger.info('Start to encrypt instance %s' % self._instance.id)
@@ -147,7 +154,7 @@ class EC2Cryptomatic(object):
             flag_on = {'DeviceName': device.attachments[0]['Device'],
                        'Ebs': {'DeleteOnTermination':  delete_flag}}
 
-            # First we have too take a snapshot from the original device
+            # First we have to take a snapshot from the original device
             self._snapshot = self._take_snapshot(device)
             # Then, copy this snapshot and encrypt it
             self._encrypted = self._encrypt_snapshot(self._snapshot)
@@ -156,7 +163,19 @@ class EC2Cryptomatic(object):
             # Finally, swap the old-device for the new one
             self._swap_device(device, self._volume)
             # It's time to tidy up !
-            self._cleanup(device)
+            self._cleanup(device, preserve_unencrypted)
+            
+            if(preserve_unencrypted):
+                device.create_tags(
+                    Tags = [
+                        {
+                            'Key': 'ec2cryptomaticReplacement',
+                            'Value': self._volume.id
+                        },
+                    ]
+                )
+                self._logger.info('>Tagging legacy volume %s with replacement id %s' % (device.id, self._volume.id))
+
 
             if delete_flag:
                 self._logger.info('->Put flag DeleteOnTermination on volume')
@@ -170,7 +189,7 @@ def main(arguments):
 
     for instance in arguments.instances:
         try:
-            EC2Cryptomatic(arguments.region, instance).start_encryption()
+            EC2Cryptomatic(arguments.region, instance).start_encryption(parseBoolString(arguments.preserve_unencrypted[0]))
 
         except (EndpointConnectionError, ValueError) as error:
             logger.error('Problem with your AWS region ? (%s)' % error)
@@ -184,6 +203,7 @@ if __name__ == '__main__':
     description = 'EC2Cryptomatic - Encrypt EBS volumes from EC2 instances'
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-r', '--region', help='AWS Region', required=True)
+    parser.add_argument('-pu', '--preserve-unencrypted', nargs=1, choices=['true', 'false'], default='true', help='Preserve unencrypted volume')
     parser.add_argument('-i', '--instances', nargs='+',
                         help='Instance to encrypt', required=True)
     args = parser.parse_args()
