@@ -8,6 +8,7 @@ This tool let you :
 - Encrypt all the EBS volumes for an instance
 - Duplicate all the source tags to the target
 - Apply DeleteOnTermination flag if needs
+- Preserve the original volume or not as an option (thank to @cobaltjacket)
 
 For your information, the workflow used to encrypt a EBS volume is:
 - Take a snapshot from the original volume
@@ -62,7 +63,7 @@ Here is the syntax of ec2cryptomatic. You have to specify a AWS region name
 and one or more instance ID.
 
 ```
-usage: ec2cryptomatic.py [-h] -r REGION -i INSTANCES [INSTANCES ...]
+usage: ec2cryptomatic.py [-h] -r REGION -i INSTANCES [INSTANCES ...] [-ds]
 
 EC2Cryptomatic - Encrypt EBS volumes from EC2 instances
 
@@ -72,6 +73,9 @@ optional arguments:
                         AWS Region
   -i INSTANCES [INSTANCES ...], --instances INSTANCES [INSTANCES ...]
                         Instance to encrypt
+  -ds, --discard_source
+                        Discard source volume after encryption (default:
+                        False)
 ```
 
 ## Example
@@ -84,6 +88,7 @@ instance-id (do not use commas, only spaces) after the -i flag) :
 ## TODO
 
 Lot of work ahead ! :-)
+
 - I'll add the support for non-EBS root volume later
 - Add support of custom KMS master keys
 

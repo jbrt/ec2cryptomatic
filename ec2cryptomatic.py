@@ -16,9 +16,6 @@ stream_handler = logging.StreamHandler()
 stream_handler.setLevel(logging.DEBUG)
 logger.addHandler(stream_handler)
 
-def parseBoolString(inputString):
-    "Return 0 for FALSE or 1 for TRUE"
-    return(inputString[0].upper()=='T')
 
 class EC2Cryptomatic(object):
     """ Encrypt EBS volumes from an EC2 instance """
@@ -45,7 +42,7 @@ class EC2Cryptomatic(object):
         self._wait_snapshot = self._ec2_client.get_waiter('snapshot_completed')
         self._wait_volume = self._ec2_client.get_waiter('volume_available')
 
-        # Do some precheck : instances must exists and be stopped
+        # Do some pre-check : instances must exists and be stopped
         self._instance_is_exists()
         self._instance_is_stopped()
 
@@ -59,18 +56,21 @@ class EC2Cryptomatic(object):
         if self._instance.state['Name'] != 'stopped':
             raise TypeError('Instance still running ! please stop it.')
 
-    def _cleanup(self, device, preserve_unencrypted):
+    def _cleanup(self, device, discard_source):
         """ Delete the temporary objects
             :param device: the original device to delete
         """
 
         self._logger.info('->Cleanup of resources')
         self._wait_volume.wait(VolumeIds=[device.id])
-        if not(preserve_unencrypted):
+
+        if discard_source:
             self._logger.info('-->Deleting unencrypted volume %s' % device.id)
             device.delete()
+
         else:
             self._logger.info('-->Preserving unencrypted volume %s' % device.id)
+
         self._snapshot.delete()
         self._encrypted.delete()
 
@@ -126,7 +126,7 @@ class EC2Cryptomatic(object):
         self._wait_snapshot.wait(SnapshotIds=[snapshot.id])
         return snapshot
 
-    def start_encryption(self, preserve_unencrypted):
+    def start_encryption(self, discard_source):
         """ Launch encryption process """
 
         self._logger.info('Start to encrypt instance %s' % self._instance.id)
@@ -163,19 +163,19 @@ class EC2Cryptomatic(object):
             # Finally, swap the old-device for the new one
             self._swap_device(device, self._volume)
             # It's time to tidy up !
-            self._cleanup(device, preserve_unencrypted)
+            self._cleanup(device, discard_source)
             
-            if(preserve_unencrypted):
+            if not discard_source:
+                self._logger.info('>Tagging legacy volume %s with replacement '
+                                  'id %s' % (device.id, self._volume.id))
                 device.create_tags(
-                    Tags = [
+                    Tags=[
                         {
                             'Key': 'ec2cryptomaticReplacement',
                             'Value': self._volume.id
                         },
                     ]
                 )
-                self._logger.info('>Tagging legacy volume %s with replacement id %s' % (device.id, self._volume.id))
-
 
             if delete_flag:
                 self._logger.info('->Put flag DeleteOnTermination on volume')
@@ -189,7 +189,7 @@ def main(arguments):
 
     for instance in arguments.instances:
         try:
-            EC2Cryptomatic(arguments.region, instance).start_encryption(parseBoolString(arguments.preserve_unencrypted[0]))
+            EC2Cryptomatic(arguments.region, instance).start_encryption(arguments.discard_source)
 
         except (EndpointConnectionError, ValueError) as error:
             logger.error('Problem with your AWS region ? (%s)' % error)
@@ -199,12 +199,14 @@ def main(arguments):
             logger.error('Problem with the instance (%s)' % error)
             continue
 
+
 if __name__ == '__main__':
     description = 'EC2Cryptomatic - Encrypt EBS volumes from EC2 instances'
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-r', '--region', help='AWS Region', required=True)
-    parser.add_argument('-pu', '--preserve-unencrypted', nargs=1, choices=['true', 'false'], default='true', help='Preserve unencrypted volume')
     parser.add_argument('-i', '--instances', nargs='+',
                         help='Instance to encrypt', required=True)
+    parser.add_argument('-ds', '--discard_source', action='store_true', default=False,
+                        help='Discard source volume after encryption (default: False)')
     args = parser.parse_args()
     main(args)
