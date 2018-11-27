@@ -59,9 +59,9 @@ class EC2Cryptomatic(object):
             
     def _start_instance(self):
         try:
-            self.logger.info('-> Starting instance %s' % self._instance.id])
+            self._logger.info('-> Starting instance %s' % self._instance.id)
             self._ec2_client.start_instances(InstanceIds=[self._instance.id])
-            self.logger.info('-> Instance %s started' % self._instance.id])
+            self._logger.info('-> Instance %s started' % self._instance.id)
         except ClientError:
             raise TypeError ('-> Instance %s could not be started' % self._instance.id)
             
