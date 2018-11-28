@@ -9,6 +9,7 @@ This tool let you :
 - Duplicate all the source tags to the target
 - Apply DeleteOnTermination flag if needs
 - Preserve the original volume or not as an option (thank to @cobaltjacket)
+- Start each instance after encrypting is complete (thank to @dshah22)
 
 For your information, the workflow used to encrypt a EBS volume is:
 - Take a snapshot from the original volume
