@@ -56,6 +56,15 @@ class EC2Cryptomatic(object):
         if self._instance.state['Name'] != 'stopped':
             raise TypeError('Instance still running ! please stop it.')
 
+            
+    def _start_instance(self):
+        try:
+            self._logger.info('-> Starting instance %s' % self._instance.id)
+            self._ec2_client.start_instances(InstanceIds=[self._instance.id])
+            self._logger.info('-> Instance %s started' % self._instance.id)
+        except ClientError:
+            raise TypeError ('-> Instance %s could not be started' % self._instance.id)
+            
     def _cleanup(self, device, discard_source):
         """ Delete the temporary objects
             :param device: the original device to delete
@@ -164,6 +173,7 @@ class EC2Cryptomatic(object):
             self._swap_device(device, self._volume)
             # It's time to tidy up !
             self._cleanup(device, discard_source)
+            self._start_instance() 
             
             if not discard_source:
                 self._logger.info('>Tagging legacy volume %s with replacement '
