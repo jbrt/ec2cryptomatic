@@ -63,7 +63,7 @@ Here is the syntax of ec2cryptomatic. You have to specify a AWS region name
 and one or more instance ID.
 
 ```
-usage: ec2cryptomatic.py [-h] -r REGION -i INSTANCES [INSTANCES ...] -k KMS-KEY [-ds]
+usage: ec2cryptomatic.py [-h] -r REGION -i INSTANCES [INSTANCES ...] [-k KMS-KEY] [-ds]
 
 EC2Cryptomatic - Encrypt EBS volumes from EC2 instances
 
