@@ -20,13 +20,15 @@ logger.addHandler(stream_handler)
 class EC2Cryptomatic(object):
     """ Encrypt EBS volumes from an EC2 instance """
 
-    def __init__(self, region: str, instance: str):
+    def __init__(self, region: str, instance: str, key: str):
         """ Constructor
             :param region: the AWS region where the instance is
             :param instance: one instance-id
+            :param key: the AWS KMS Key to be used to encrypt the volume
         """
         self._logger = logging.getLogger('ec2-cryptomatic')
         self._logger.setLevel(logging.DEBUG)
+        self._kms_key = key
 
         self._ec2_client = boto3.client('ec2', region_name=region)
         self._ec2_resource = boto3.resource('ec2', region_name=region)
@@ -56,15 +58,15 @@ class EC2Cryptomatic(object):
         if self._instance.state['Name'] != 'stopped':
             raise TypeError('Instance still running ! please stop it.')
 
-            
+
     def _start_instance(self):
         try:
             self._logger.info('-> Starting instance %s' % self._instance.id)
             self._ec2_client.start_instances(InstanceIds=[self._instance.id])
             self._logger.info('-> Instance %s started' % self._instance.id)
         except ClientError:
-            raise TypeError ('-> Instance %s could not be started' % self._instance.id)
-            
+            raise
+
     def _cleanup(self, device, discard_source):
         """ Delete the temporary objects
             :param device: the original device to delete
@@ -108,7 +110,7 @@ class EC2Cryptomatic(object):
 
         self._logger.info('->Copy the snapshot %s and encrypt it' % snapshot.id)
         snap_id = snapshot.copy(Description='encrypted copy of %s' % snapshot.id,
-                                Encrypted=True, SourceRegion=self._region)
+                                Encrypted=True, SourceRegion=self._region, KmsKeyId=self._kms_key)
         snapshot = self._ec2_resource.Snapshot(snap_id['SnapshotId'])
         self._wait_snapshot.wait(SnapshotIds=[snapshot.id])
         return snapshot
@@ -173,15 +175,15 @@ class EC2Cryptomatic(object):
             self._swap_device(device, self._volume)
             # It's time to tidy up !
             self._cleanup(device, discard_source)
-            self._start_instance() 
-            
+            # starting the stopped instance
+             
             if not discard_source:
                 self._logger.info('>Tagging legacy volume %s with replacement '
                                   'id %s' % (device.id, self._volume.id))
                 device.create_tags(
                     Tags=[
                         {
-                            'Key': 'ec2cryptomaticReplacement',
+                            'Key': 'encryptedReplacement',
                             'Value': self._volume.id
                         },
                     ]
@@ -190,7 +192,7 @@ class EC2Cryptomatic(object):
             if delete_flag:
                 self._logger.info('->Put flag DeleteOnTermination on volume')
                 self._instance.modify_attribute(BlockDeviceMappings=[flag_on])
-
+        self._start_instance()
         self._logger.info('End of work on instance %s\n' % self._instance.id)
 
 
@@ -199,7 +201,7 @@ def main(arguments):
 
     for instance in arguments.instances:
         try:
-            EC2Cryptomatic(arguments.region, instance).start_encryption(arguments.discard_source)
+            EC2Cryptomatic(arguments.region, instance, arguments.key).start_encryption(arguments.discard_source)
 
         except (EndpointConnectionError, ValueError) as error:
             logger.error('Problem with your AWS region ? (%s)' % error)
@@ -216,6 +218,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--region', help='AWS Region', required=True)
     parser.add_argument('-i', '--instances', nargs='+',
                         help='Instance to encrypt', required=True)
+    parser.add_argument('-k', '--key', help='KMS Key', required=True)
     parser.add_argument('-ds', '--discard_source', action='store_true', default=False,
                         help='Discard source volume after encryption (default: False)')
     args = parser.parse_args()
