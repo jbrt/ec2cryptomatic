@@ -218,7 +218,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--region', help='AWS Region', required=True)
     parser.add_argument('-i', '--instances', nargs='+',
                         help='Instance to encrypt', required=True)
-    parser.add_argument('-k', '--key', help='KMS Key', required=True)
+    parser.add_argument('-k', '--key', help="KMS Key ID. For alias, add prefix 'alias/'", default='alias/aws/ebs')
     parser.add_argument('-ds', '--discard_source', action='store_true', default=False,
                         help='Discard source volume after encryption (default: False)')
     args = parser.parse_args()
