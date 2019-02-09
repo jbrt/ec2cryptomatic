@@ -81,6 +81,17 @@ optional arguments:
                         False)
 ```
 
+## Docker
+
+You can build a Docker image of that tool with the Dockerfile provided in 
+this repository :
+
+`docker build -t ec2cryptomatic:latest .`
+
+Or you can use the image already pulled into the official Docker Hub:
+
+`docker pull jbrt/ec2cryptomatic`
+
 ## Example
 
 Each instance will be encrypted one by one (you may specify one or more
@@ -93,6 +104,7 @@ instance-id (do not use commas, only spaces) after the -i flag) :
 Lot of work ahead ! :-)
 
 - I'll add the support for non-EBS root volume later
+- I'll work on a Serverless version of this script
 
 ## License
 
