@@ -2,6 +2,8 @@
 
 Encrypt EBS volumes from AWS EC2 instances
 
+**A serverless version of this script exists here:** https://github.com/jbrt/ec2cryptomatic-serverless
+
 ## Description
 
 This tool let you :
@@ -103,8 +105,7 @@ instance-id (do not use commas, only spaces) after the -i flag) :
 
 Lot of work ahead ! :-)
 
-- I'll add the support for non-EBS root volume later
-- I'll work on a Serverless version of this script
+- ~~I'll work on a Serverless version of this script~~ (done)
 
 ## License
 
