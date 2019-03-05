@@ -88,12 +88,6 @@ instance-id (do not use commas, only spaces) after the -i flag) :
 
 ![example](ec2cryptomatic.png)
 
-## TODO
-
-Lot of work ahead ! :-)
-
-- I'll add the support for non-EBS root volume later
-
 ## License
 
 This project is under GPL3 license
