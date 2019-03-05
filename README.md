@@ -101,12 +101,6 @@ instance-id (do not use commas, only spaces) after the -i flag) :
 
 ![example](ec2cryptomatic.png)
 
-## TODO
-
-Lot of work ahead ! :-)
-
-- ~~I'll work on a Serverless version of this script~~ (done)
-
 ## License
 
 This project is under GPL3 license
