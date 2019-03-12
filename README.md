@@ -48,7 +48,8 @@ Remember: ***Access Key are just a login and a password in the wild...***
                 "ec2:DescribeSnapshots",
                 "ec2:DescribeVolumes",
                 "ec2:DetachVolume",
-                "ec2:ModifyInstanceAttribute"
+                "ec2:ModifyInstanceAttribute",
+		"ec2:StartInstances"
             ],
             "Effect": "Allow",
             "Resource": "*"
