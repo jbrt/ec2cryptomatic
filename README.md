@@ -4,6 +4,9 @@ Encrypt EBS volumes from AWS EC2 instances
 
 **A serverless version of this script exists here:** https://github.com/jbrt/ec2cryptomatic-serverless
 
+**EC2Cryptomatic will evolve soon (since now it's possible to encrypt EBS volumes more easily).**
+https://aws.amazon.com/about-aws/whats-new/2019/05/launch-encrypted-ebs-backed-ec2-instances-from-unencrypted-amis-in-a-single-step/
+
 ## Description
 
 This tool let you :
