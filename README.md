@@ -21,7 +21,9 @@ For your information, the workflow used to encrypt a EBS volume is:
 ## Prerequisites
 
 Before using this tool you have to install the python AWS SDK Boto3 on your
-EC2 instance. You can use pip for that and the requirement file:
+EC2 instance. This tools **needs Python 3.6** as requirement. 
+
+You can use pip for that and the requirement file:
 
 `pip install -r requirements.txt`
 
@@ -65,7 +67,8 @@ Here is the syntax of ec2cryptomatic. You have to specify a AWS region name
 and one or more instance ID.
 
 ```
-usage: ec2cryptomatic.py [-h] -r REGION -i INSTANCES [INSTANCES ...] [-k KMS-KEY] [-ds]
+usage: ec2cryptomatic.py [-h] -r REGION -i INSTANCES [INSTANCES ...] [-k KEY]
+                         [-ds] [-v]
 
 EC2Cryptomatic - Encrypt EBS volumes from EC2 instances
 
@@ -75,11 +78,11 @@ optional arguments:
                         AWS Region
   -i INSTANCES [INSTANCES ...], --instances INSTANCES [INSTANCES ...]
                         Instance to encrypt
-  -k KEY, --kms-key KEY 
-                        KMS Key to be used for encryption
+  -k KEY, --key KEY     KMS Key ID. For alias, add prefix 'alias/'
   -ds, --discard_source
                         Discard source volume after encryption (default:
                         False)
+  -v, --version         show program's version number and exit
 ```
 
 ## Docker
