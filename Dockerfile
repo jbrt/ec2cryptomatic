@@ -7,3 +7,4 @@ WORKDIR /app
 RUN pip install -r requirements.txt
 
 ENTRYPOINT ["/usr/local/bin/python3", "/app/ec2cryptomatic.py"]
+CMD ["--help"]

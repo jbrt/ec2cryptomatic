@@ -8,6 +8,8 @@ import sys
 from botocore.exceptions import ClientError
 from botocore.exceptions import EndpointConnectionError
 
+__version__ = '1.1.0'
+
 # Define the global logger
 LOGGER = logging.getLogger('ec2-cryptomatic')
 LOGGER.setLevel(logging.DEBUG)
@@ -21,10 +23,10 @@ class EC2Cryptomatic(object):
 
     def __init__(self, region: str, instance: str, key: str):
         """
-        Constructor
-        :param region: the AWS region where the instance is
-        :param instance: one instance-id
-        :param key: the AWS KMS Key to be used to encrypt the volume
+        Initialization
+        :param region: (str) the AWS region where the instance is
+        :param instance: (str) one instance-id
+        :param key: (str) the AWS KMS Key to be used to encrypt the volume
         """
         self._kms_key = key
         self._ec2_client = boto3.client('ec2', region_name=region)
@@ -47,7 +49,8 @@ class EC2Cryptomatic(object):
     def _instance_is_exists(self):
         """
         Check if instance exists
-        :return:
+        :return: None
+        :except: ClientError
         """
         try:
             self._ec2_client.describe_instances(InstanceIds=[self._instance.id])
@@ -57,7 +60,8 @@ class EC2Cryptomatic(object):
     def _instance_is_stopped(self):
         """
         Check if instance is stopped
-        :return:
+        :return: None
+        :except: TypeError
         """
         if self._instance.state['Name'] != 'stopped':
             raise TypeError('Instance still running ! please stop it.')
@@ -65,7 +69,8 @@ class EC2Cryptomatic(object):
     def _start_instance(self):
         """
         Starts the instance
-        :return:
+        :return: None
+        :except: ClientError
         """
         try:
             LOGGER.info(f'-- Starting instance {self._instance.id}')
@@ -105,6 +110,8 @@ class EC2Cryptomatic(object):
                     'KmsKeyId': self._kms_key}
 
         if original_device.volume_type.startswith('io'):
+            LOGGER.info(f'-- Provisioned IOPS volume detected (with '
+                        f'{original_device.iops} IOPS)')
             vol_args['Iops'] = original_device.iops
 
         LOGGER.info(f'-- Creating an encrypted volume from {snapshot.id}')
@@ -170,14 +177,14 @@ class EC2Cryptomatic(object):
                        'Ebs': {'DeleteOnTermination':  delete_flag}}
 
             # First we have to take a snapshot from the original device
-            self._snapshot = self._take_snapshot(device)
-            # Create a new encrypted volume from that snapshot
-            self._volume = self._create_volume(self._snapshot, device)
+            self._snapshot = self._take_snapshot(device=device)
+            # Then, create a new encrypted volume from that snapshot
+            self._volume = self._create_volume(snapshot=self._snapshot,
+                                               original_device=device)
             # Finally, swap the old-device for the new one
-            self._swap_device(device, self._volume)
+            self._swap_device(old_volume=device, new_volume=self._volume)
             # It's time to tidy up !
-            self._cleanup(device, discard_source)
-            # starting the stopped instance
+            self._cleanup(device=device, discard_source=discard_source)
              
             if not discard_source:
                 LOGGER.info(f'- Tagging legacy volume {device.id} with '
@@ -196,6 +203,7 @@ class EC2Cryptomatic(object):
                 self._instance.modify_attribute(BlockDeviceMappings=[flag_on])
             LOGGER.info('')
 
+        # starting the stopped instance
         self._start_instance()
         LOGGER.info(f'End of work on instance {self._instance.id}\n')
 
@@ -209,9 +217,9 @@ def main(args: argparse.Namespace):
 
     for instance in args.instances:
         try:
-            EC2Cryptomatic(args.region,
-                           instance,
-                           args.key).start_encryption(args.discard_source)
+            EC2Cryptomatic(region=args.region,
+                           instance=instance,
+                           key=args.key).start_encryption(args.discard_source)
 
         except (EndpointConnectionError, ValueError) as error:
             LOGGER.error(f'Problem with your AWS region ? ({error})')
@@ -225,6 +233,7 @@ def main(args: argparse.Namespace):
 def parse_arguments() -> argparse.Namespace:
     """
     Parse arguments from CLI
+    :returns: argparse.Namespace
     """
     description = 'EC2Cryptomatic - Encrypt EBS volumes from EC2 instances'
     parser = argparse.ArgumentParser(description=description)
@@ -234,6 +243,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument('-k', '--key', help="KMS Key ID. For alias, add prefix 'alias/'", default='alias/aws/ebs')
     parser.add_argument('-ds', '--discard_source', action='store_true', default=False,
                         help='Discard source volume after encryption (default: False)')
+    parser.add_argument('-v', '--version', action='version', version=__version__)
     return parser.parse_args()
 
 
