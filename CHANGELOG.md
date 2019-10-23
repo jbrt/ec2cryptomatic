@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- Fixing a problem with BOTO waiters (adding a maximum retry value) 
+
 ## 1.1.0
 
 - Upgrade Boto modules
