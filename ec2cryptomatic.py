@@ -1,24 +1,33 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+"""
+EC2Cryptomatic
+A tool for encrypting EC2 volumes
+"""
+
 import argparse
-import boto3
 import logging
 import sys
+import boto3
 from botocore.exceptions import ClientError
 from botocore.exceptions import EndpointConnectionError
 
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 
 # Define the global logger
 LOGGER = logging.getLogger('ec2-cryptomatic')
 LOGGER.setLevel(logging.DEBUG)
-stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.DEBUG)
-LOGGER.addHandler(stream_handler)
+STREAM_HANDLER = logging.StreamHandler()
+STREAM_HANDLER.setLevel(logging.DEBUG)
+LOGGER.addHandler(STREAM_HANDLER)
+
+# Constants
+MAX_RETRIES = 120
+DELAY_RETRY = 60
 
 
-class EC2Cryptomatic(object):
+class EC2Cryptomatic:
     """ Encrypt EBS volumes from an EC2 instance """
 
     def __init__(self, region: str, instance: str, key: str):
@@ -41,6 +50,12 @@ class EC2Cryptomatic(object):
         # Waiters
         self._wait_snapshot = self._ec2_client.get_waiter('snapshot_completed')
         self._wait_volume = self._ec2_client.get_waiter('volume_available')
+
+        # Waiters retries values
+        self._wait_snapshot.config.max_attempts = MAX_RETRIES
+        self._wait_volume.config.max_attempts = MAX_RETRIES
+        self._wait_snapshot.config.delay = DELAY_RETRY
+        self._wait_volume.config.delay = DELAY_RETRY
 
         # Do some pre-check : instances must exists and be stopped
         self._instance_is_exists()
@@ -185,7 +200,7 @@ class EC2Cryptomatic(object):
             self._swap_device(old_volume=device, new_volume=self._volume)
             # It's time to tidy up !
             self._cleanup(device=device, discard_source=discard_source)
-             
+
             if not discard_source:
                 LOGGER.info(f'- Tagging legacy volume {device.id} with '
                             f'replacement id {self._volume.id}')
