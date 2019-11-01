@@ -1,5 +1,9 @@
 # EC2Cryptomatic
 
+[![Github Action](https://github.com/jbrt/ec2cryptomatic/workflows/publish-docker-image/badge.svg)](https://github.com/jbrt/ec2cryptomatic/actions?workflow=publish-docker-image)
+![Docker Pulls](https://img.shields.io/docker/pulls/jbrt/ec2cryptomatic.svg?label=pulls&logo=docker)
+![MicroBadger Size](https://img.shields.io/microbadger/image-size/jbrt/ec2cryptomatic.svg)
+
 Encrypt EBS volumes from AWS EC2 instances
 
 **A serverless version of this script exists here:** https://github.com/jbrt/ec2cryptomatic-serverless

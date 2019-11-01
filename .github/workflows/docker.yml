@@ -1,0 +1,30 @@
+name: publish-docker-image
+on: 
+  push:
+    tags: 
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Publish Docker image to Registry
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: jbrt/ec2cryptomatic
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        dockerfile: Dockerfile
+        tag_names: true
+
+    - name: Checkout to the latest tag
+      run: git checkout $(git tag |tail -1)
+    - name: Publish image to Registry with tag
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: jbrt/ec2cryptomatic
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        dockerfile: Dockerfile
+        tag_names: true
