@@ -16,7 +16,6 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: Dockerfile
-        tag_names: true
 
     - name: Checkout to the latest tag
       run: git checkout $(git tag |tail -1)
