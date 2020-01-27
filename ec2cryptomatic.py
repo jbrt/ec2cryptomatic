@@ -10,10 +10,9 @@ import argparse
 import logging
 import sys
 import boto3
-from botocore.exceptions import ClientError
-from botocore.exceptions import EndpointConnectionError
+from botocore.exceptions import ClientError, EndpointConnectionError
 
-__version__ = '1.1.1'
+__version__ = '1.1.2'
 
 # Define the global logger
 LOGGER = logging.getLogger('ec2-cryptomatic')
@@ -23,7 +22,7 @@ STREAM_HANDLER.setLevel(logging.DEBUG)
 LOGGER.addHandler(STREAM_HANDLER)
 
 # Constants
-MAX_RETRIES = 120
+MAX_RETRIES = 360
 DELAY_RETRY = 60
 
 
@@ -61,7 +60,7 @@ class EC2Cryptomatic:
         self._instance_is_exists()
         self._instance_is_stopped()
 
-    def _instance_is_exists(self):
+    def _instance_is_exists(self) -> None:
         """
         Check if instance exists
         :return: None
@@ -72,7 +71,7 @@ class EC2Cryptomatic:
         except ClientError:
             raise
 
-    def _instance_is_stopped(self):
+    def _instance_is_stopped(self) -> None:
         """
         Check if instance is stopped
         :return: None
@@ -81,7 +80,7 @@ class EC2Cryptomatic:
         if self._instance.state['Name'] != 'stopped':
             raise TypeError('Instance still running ! please stop it.')
 
-    def _start_instance(self):
+    def _start_instance(self) -> None:
         """
         Starts the instance
         :return: None
@@ -94,7 +93,7 @@ class EC2Cryptomatic:
         except ClientError:
             raise
 
-    def _cleanup(self, device, discard_source):
+    def _cleanup(self, device, discard_source) -> None:
         """
         Delete the temporary objects
         :param device: the original device to delete
@@ -134,11 +133,15 @@ class EC2Cryptomatic:
         self._wait_volume.wait(VolumeIds=[volume.id])
 
         if original_device.tags:
-            volume.create_tags(Tags=original_device.tags)
+            # It's not possible to create tags starting by 'aws:'
+            # So, we have to filter AWS managed tags (ex: CloudFormation tags)
+            valid_tags = [tag for tag in original_device.tags if not tag['Key'].startswith('aws:')]
+            if valid_tags:
+                volume.create_tags(Tags=original_device.tags)
 
         return volume
 
-    def _swap_device(self, old_volume, new_volume):
+    def _swap_device(self, old_volume, new_volume) -> None:
         """
         Swap the old device with the new encrypted one
         :param old_volume: volume to detach from the instance
@@ -159,9 +162,10 @@ class EC2Cryptomatic:
         LOGGER.info(f'-- Take a snapshot for volume {device.id}')
         snapshot = device.create_snapshot(Description=f'snap of {device.id}')
         self._wait_snapshot.wait(SnapshotIds=[snapshot.id])
+
         return snapshot
 
-    def start_encryption(self, discard_source: bool):
+    def start_encryption(self, discard_source: bool) -> None:
         """
         Launch encryption process
         :param discard_source: (book) if yes, delete source volumes at the end
@@ -204,14 +208,8 @@ class EC2Cryptomatic:
             if not discard_source:
                 LOGGER.info(f'- Tagging legacy volume {device.id} with '
                             f'replacement id {self._volume.id}')
-                device.create_tags(
-                    Tags=[
-                        {
-                            'Key': 'encryptedReplacement',
-                            'Value': self._volume.id
-                        },
-                    ]
-                )
+                device.create_tags(Tags=[{'Key': 'encryptedReplacement',
+                                          'Value': self._volume.id}, ])
 
             if delete_flag:
                 LOGGER.info('-- Put flag DeleteOnTermination on volume')
@@ -223,7 +221,7 @@ class EC2Cryptomatic:
         LOGGER.info(f'End of work on instance {self._instance.id}\n')
 
 
-def main(args: argparse.Namespace):
+def main(args: argparse.Namespace) -> None:
     """
     Main program
     :param args: arguments from CLI

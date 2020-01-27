@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+- Fixing a problem with AWS tags (can't copy AWS tags) 
+
 ## 1.1.1
 
 - Fixing a problem with BOTO waiters (adding a maximum retry value) 
