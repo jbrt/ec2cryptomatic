@@ -12,7 +12,7 @@ import sys
 import boto3
 from botocore.exceptions import ClientError, EndpointConnectionError
 
-__version__ = '1.1.2'
+__version__ = '1.2.2'
 
 # Define the global logger
 LOGGER = logging.getLogger('ec2-cryptomatic')

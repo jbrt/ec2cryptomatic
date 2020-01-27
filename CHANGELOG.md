@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.2
+## 1.2.2
 
 - Fixing a problem with AWS tags (can't copy AWS tags) 
 
