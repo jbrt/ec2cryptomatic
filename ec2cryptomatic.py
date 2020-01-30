@@ -12,7 +12,7 @@ import sys
 import boto3
 from botocore.exceptions import ClientError, EndpointConnectionError
 
-__version__ = '1.2.2'
+__version__ = '1.2.3'
 
 # Define the global logger
 LOGGER = logging.getLogger('ec2-cryptomatic')
@@ -137,7 +137,7 @@ class EC2Cryptomatic:
             # So, we have to filter AWS managed tags (ex: CloudFormation tags)
             valid_tags = [tag for tag in original_device.tags if not tag['Key'].startswith('aws:')]
             if valid_tags:
-                volume.create_tags(Tags=original_device.tags)
+                volume.create_tags(Tags=valid_tags)
 
         return volume
 
