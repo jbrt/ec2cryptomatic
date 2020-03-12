@@ -56,8 +56,9 @@ class EC2Cryptomatic:
         self._wait_snapshot.config.delay = DELAY_RETRY
         self._wait_volume.config.delay = DELAY_RETRY
 
-        # Do some pre-check : instances must exists and be stopped
+        # Do some pre-check : instances must exists, support encrpted volumes and be stopped
         self._instance_is_exists()
+        self._instance_supports_encrypted_volume()
         self._instance_is_stopped()
 
     def _instance_is_exists(self) -> None:
@@ -70,6 +71,16 @@ class EC2Cryptomatic:
             self._ec2_client.describe_instances(InstanceIds=[self._instance.id])
         except ClientError:
             raise
+
+    def _instance_supports_encrypted_volume(self) -> None:
+        """
+        Check if instance supports encrypted volume
+        :return: None
+        :except: TypeError
+        """
+        if self._instance.instance_type.startswith(('c1.', 'm1.', 'm2.', 't1.')):
+            raise TypeError(f'Instance {self._instance.instance_type} '
+                            f'does not support encrypted volumes.')
 
     def _instance_is_stopped(self) -> None:
         """
