@@ -10,11 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
-const (
-	// How many attempts EC2 waiters will used between SDK actions
-	maxAttempts int = 10000
-)
-
 // Volume2Encrypt contains all needed information for encrypting an EBS volume
 type Volume2Encrypt struct {
 	volumeID *string
@@ -109,7 +104,7 @@ func (v Volume2Encrypt) EncryptVolume() (*ec2.Volume, error) {
 		return nil, err
 	}
 
-	waiterMaxAttempts := request.WithWaiterMaxAttempts(maxAttempts)
+	waiterMaxAttempts := request.WithWaiterMaxAttempts(constants.volumeMaxAttempts)
 	errWaiter := v.client.WaitUntilVolumeAvailableWithContext(
 		aws.BackgroundContext(),
 		&ec2.DescribeVolumesInput{VolumeIds: []*string{volume.VolumeId}},
