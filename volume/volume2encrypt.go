@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/jbrt/ec2cryptomatic/constants"
 )
 
 // Volume2Encrypt contains all needed information for encrypting an EBS volume
@@ -49,7 +50,7 @@ func (v Volume2Encrypt) takeSnapshot() (*ec2.Snapshot, error) {
 		return nil, err
 	}
 
-	waiterMaxAttempts := request.WithWaiterMaxAttempts(maxAttempts)
+	waiterMaxAttempts := request.WithWaiterMaxAttempts(constants.VolumeMaxAttempts)
 	errWaiter := v.client.WaitUntilSnapshotCompletedWithContext(
 		aws.BackgroundContext(),
 		&ec2.DescribeSnapshotsInput{SnapshotIds: []*string{snapshot.SnapshotId}},
@@ -104,7 +105,7 @@ func (v Volume2Encrypt) EncryptVolume() (*ec2.Volume, error) {
 		return nil, err
 	}
 
-	waiterMaxAttempts := request.WithWaiterMaxAttempts(constants.volumeMaxAttempts)
+	waiterMaxAttempts := request.WithWaiterMaxAttempts(constants.VolumeMaxAttempts)
 	errWaiter := v.client.WaitUntilVolumeAvailableWithContext(
 		aws.BackgroundContext(),
 		&ec2.DescribeVolumesInput{VolumeIds: []*string{volume.VolumeId}},
