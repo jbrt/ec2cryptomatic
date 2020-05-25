@@ -1,10 +1,11 @@
-FROM python:3.6.8-alpine
+FROM golang:1.14.3-alpine3.11 AS builder
+WORKDIR /go/src/github.com/jbrt/ec2cryptomatic  
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ec2cryptomatic .
 
+FROM scratch  
 LABEL maintainer="julien@toshokan.fr"
-
-COPY . /app
-WORKDIR /app
-RUN pip install -r requirements.txt
-
-ENTRYPOINT ["/usr/local/bin/python3", "/app/ec2cryptomatic.py"]
-CMD ["--help"]
+WORKDIR /app/
+COPY --from=builder /go/src/github.com/jbrt/ec2cryptomatic/ec2cryptomatic .
+ENTRYPOINT ["./ec2cryptomatic"]
+CMD ["--help"]  
