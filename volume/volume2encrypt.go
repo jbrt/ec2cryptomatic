@@ -134,7 +134,7 @@ func New(session *session.Session, volumeID string, kmsKeyID string) (*Volume2En
 	input := &ec2.DescribeVolumesInput{VolumeIds: []*string{aws.String(volumeID)}}
 	describe, err := client.DescribeVolumes(input)
 	if err != nil {
-		log.Fatal("Cannot get information from volume " + volumeID)
+		log.Fatal("--- Cannot get information from volume " + volumeID)
 		return &Volume2Encrypt{}, err
 	}
 
