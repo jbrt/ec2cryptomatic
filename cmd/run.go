@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jbrt/ec2cryptomatic/algorithm"
+	"github.com/jbrt/ec2cryptomatic/internal/algorithm"
 	"github.com/spf13/cobra"
 )
 

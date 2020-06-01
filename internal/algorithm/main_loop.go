@@ -7,8 +7,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/jbrt/ec2cryptomatic/instance"
-	"github.com/jbrt/ec2cryptomatic/volume"
+	"github.com/jbrt/ec2cryptomatic/internal/instance"
+	"github.com/jbrt/ec2cryptomatic/internal/volume"
 )
 
 // EncryptInstance will takes an instanceID and encrypt all the related EBS volumes
