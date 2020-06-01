@@ -24,18 +24,20 @@ For your information, the workflow used to encrypt a EBS volume is:
 - Swap the volumes
 - Do some cleaning
 
+## Note about version 2.x
+
+Since version 1, EC2Cryptomatic was coded in Python. This version 2 is a 
+complete rewriting of this tool in Golang.
+
+Why Golang instead of Python ? Principaly because of fun and for training for 
+the author on that language.
+
+Golang is also a good option for a CLI tool like this (more portable than 
+Python).
+
 ## Prerequisites
 
-Before using this tool you have to install the python AWS SDK Boto3 on your
-EC2 instance. This tools **needs Python 3.6** as requirement. 
-
-You can use pip for that and the requirement file:
-
-`pip install -r requirements.txt`
-
-Then, I recommend you to create an dedicated IAM Role with the IAM policy
-below. This script do not use Access Keys because i prefer avoid them.
-Remember: ***Access Key are just a login and a password in the wild...***
+EC2Cryptomatic needs the following IAM rights:
 
 ```json
 {
@@ -57,7 +59,7 @@ Remember: ***Access Key are just a login and a password in the wild...***
                 "ec2:DescribeVolumes",
                 "ec2:DetachVolume",
                 "ec2:ModifyInstanceAttribute",
-		"ec2:StartInstances"
+		        "ec2:StartInstances"
             ],
             "Effect": "Allow",
             "Resource": "*"
@@ -70,25 +72,20 @@ Remember: ***Access Key are just a login and a password in the wild...***
 ## Syntax
 
 Here is the syntax of ec2cryptomatic. You have to specify a AWS region name
-and one or more instance ID.
+and one EC2 instance ID.
 
 ```
-usage: ec2cryptomatic.py [-h] -r REGION -i INSTANCES [INSTANCES ...] [-k KEY]
-                         [-ds] [-v]
+Encrypt all EBS volumes for the given instances
 
-EC2Cryptomatic - Encrypt EBS volumes from EC2 instances
+Usage:
+  ec2cryptomatic run [flags]
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -r REGION, --region REGION
-                        AWS Region
-  -i INSTANCES [INSTANCES ...], --instances INSTANCES [INSTANCES ...]
-                        Instance to encrypt
-  -k KEY, --key KEY     KMS Key ID. For alias, add prefix 'alias/'
-  -ds, --discard_source
-                        Discard source volume after encryption (default:
-                        False)
-  -v, --version         show program's version number and exit
+Flags:
+  -d, --discard           Discard source volumes after encryption process (default: false)
+  -h, --help              help for run
+  -i, --instance string   Instance ID of instance of encrypt (required)
+  -k, --kmskey string     KMS key alias name (default "alias/aws/ebs")
+  -r, --region string     AWS region (required)
 ```
 
 ## Docker
@@ -103,9 +100,6 @@ Or you can use the image already pulled into the official Docker Hub:
 `docker pull jbrt/ec2cryptomatic`
 
 ## Example
-
-Each instance will be encrypted one by one (you may specify one or more
-instance-id (do not use commas, only spaces) after the -i flag) :
 
 ![example](ec2cryptomatic.png)
 
