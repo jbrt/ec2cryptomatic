@@ -80,14 +80,33 @@ func (e ec2Instance) SwapBlockDevice(source *ec2.InstanceBlockDeviceMapping, tar
 		VolumeId:   aws.String(*target.VolumeId),
 	}
 
-	volumeAttach, errAttach := e.client.AttachVolume(attach)
+	_, errAttach := e.client.AttachVolume(attach)
 	if errAttach != nil {
 		return errAttach
 	}
 
-	// FIXME: apparently this part doesn't works. DeleteOnTermination bit isn't set after that code
 	if *source.Ebs.DeleteOnTermination {
-		volumeAttach.SetDeleteOnTermination(true)
+
+		mappingSpecification := ec2.InstanceBlockDeviceMappingSpecification{
+			DeviceName: aws.String(*source.DeviceName),
+			Ebs: &ec2.EbsInstanceBlockDeviceSpecification{
+				DeleteOnTermination: aws.Bool(true),
+				VolumeId:            target.VolumeId,
+			},
+		}
+
+		attributeInput := ec2.ModifyInstanceAttributeInput{
+			BlockDeviceMappings: []*ec2.InstanceBlockDeviceMappingSpecification{&mappingSpecification},
+			InstanceId:          e.instanceID,
+		}
+
+		requestModify, _ := e.client.ModifyInstanceAttributeRequest(&attributeInput)
+
+		errorRequest := requestModify.Send()
+		if errorRequest != nil {
+			return errorRequest
+		}
+
 	}
 
 	return nil
