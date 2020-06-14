@@ -60,7 +60,7 @@ EC2Cryptomatic needs the following IAM rights:
                 "ec2:DescribeVolumes",
                 "ec2:DetachVolume",
                 "ec2:ModifyInstanceAttribute",
-		        "ec2:StartInstances"
+		            "ec2:StartInstances"
             ],
             "Effect": "Allow",
             "Resource": "*"
