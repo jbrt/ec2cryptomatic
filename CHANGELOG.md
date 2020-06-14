@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0
+
+- Refactoring this projet from Python to Golang. Why ? Just for fun & rampup for me on Golang language.
+
 ## 1.2.3
 
 - Again fixing a problem with AWS tags

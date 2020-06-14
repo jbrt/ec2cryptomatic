@@ -2,7 +2,6 @@
 
 [![Github Action](https://github.com/jbrt/ec2cryptomatic/workflows/publish-docker-image/badge.svg)](https://github.com/jbrt/ec2cryptomatic/actions?workflow=publish-docker-image)
 ![Docker Pulls](https://img.shields.io/docker/pulls/jbrt/ec2cryptomatic.svg?label=pulls&logo=docker)
-![MicroBadger Size](https://img.shields.io/microbadger/image-size/jbrt/ec2cryptomatic.svg)
 
 Encrypt EBS volumes from AWS EC2 instances
 
@@ -34,6 +33,8 @@ the author on that language.
 
 Golang is also a good option for a CLI tool like this (more portable than 
 Python).
+
+Python version is still available at git tag 1.2.4.
 
 ## Prerequisites
 
