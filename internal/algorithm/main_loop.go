@@ -30,6 +30,7 @@ func EncryptInstance(instanceID, region, kmsKeyAlias string, sourceDiscard bool)
 		return errors.New("Instance must be stopped and compatible with EBS encryption")
 	}
 
+	actionDone := false
 	for _, ebsVolume := range ec2.GetEBSVolumes() {
 		log.Println("-- Beginning work on volume " + *ebsVolume.Ebs.VolumeId)
 
@@ -45,27 +46,30 @@ func EncryptInstance(instanceID, region, kmsKeyAlias string, sourceDiscard bool)
 
 		encryptedVolume, encryptedVolumeError := sourceVolume.EncryptVolume()
 		if encryptedVolumeError != nil {
-			log.Fatalln("Problem while encrypting volume: %s (%s)", *ebsVolume.Ebs.VolumeId, encryptedVolumeError.Error())
+			log.Println("Problem while encrypting volume: %s (%s)", *ebsVolume.Ebs.VolumeId, encryptedVolumeError.Error())
 			continue
 		}
 
 		swappingError := ec2.SwapBlockDevice(ebsVolume, encryptedVolume)
 		if swappingError != nil {
-			log.Fatalln("Problem while trying to swap volumes: " + swappingError.Error())
+			log.Println("Problem while trying to swap volumes: " + swappingError.Error())
 			continue
 		}
 
 		if sourceDiscard {
 			sourceVolume.DeleteVolume()
 		}
-
+		actionDone = true
 	}
 
-	log.Println("Let's starts instance " + instanceID)
-	startError := ec2.StartInstance()
-	if startError != nil {
-		return startError
+	if actionDone {
+		log.Println("Let's starts instance " + instanceID)
+		startError := ec2.StartInstance()
+		if startError != nil {
+			return startError
+		}
 	}
+
 	return nil
 
 }
