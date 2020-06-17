@@ -24,3 +24,6 @@
 /Godeps/
 
 # End of https://www.gitignore.io/api/go
+
+# GoLand IDE
+**/.idea/
