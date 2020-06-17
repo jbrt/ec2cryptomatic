@@ -11,8 +11,8 @@ import (
 	"github.com/jbrt/ec2cryptomatic/constants"
 )
 
-// Volume2Encrypt contains all needed information for encrypting an EBS volume
-type Volume2Encrypt struct {
+// eBSVolumeToEncrypt contains all needed information for encrypting an EBS volume
+type eBSVolumeToEncrypt struct {
 	volumeID *string
 	kmsKeyID string
 	client   *ec2.EC2
@@ -20,9 +20,10 @@ type Volume2Encrypt struct {
 }
 
 // getTagSpecifications will returns tags from volumes by filtering out AWS specific tags (aws:xxx)
-func (v Volume2Encrypt) getTagSpecifications() []*ec2.TagSpecification {
-	ressourceType := "volume"
-	tags := []*ec2.Tag{}
+func (v eBSVolumeToEncrypt) getTagSpecifications() []*ec2.TagSpecification {
+	resourceType := "volume"
+	var tags []*ec2.Tag
+	//tags := []*ec2.Tag{}
 
 	if v.describe.Tags == nil {
 		return nil
@@ -34,12 +35,12 @@ func (v Volume2Encrypt) getTagSpecifications() []*ec2.TagSpecification {
 		}
 	}
 
-	return []*ec2.TagSpecification{{ResourceType: &ressourceType, Tags: tags}}
+	return []*ec2.TagSpecification{{ResourceType: &resourceType, Tags: tags}}
 
 }
 
 // takeSnapshot will take a snapshot from the given volume & wait until this snapshot is completed
-func (v Volume2Encrypt) takeSnapshot() (*ec2.Snapshot, error) {
+func (v eBSVolumeToEncrypt) takeSnapshot() (*ec2.Snapshot, error) {
 	snapShotInput := &ec2.CreateSnapshotInput{
 		Description: aws.String("EC2Cryptomatict temporary snapshot for " + *v.volumeID),
 		VolumeId:    v.describe.VolumeId,
@@ -63,7 +64,7 @@ func (v Volume2Encrypt) takeSnapshot() (*ec2.Snapshot, error) {
 }
 
 // DeleteVolume will delete the given volume
-func (v Volume2Encrypt) DeleteVolume() error {
+func (v eBSVolumeToEncrypt) DeleteVolume() error {
 	log.Println("--- Delete volume " + *v.volumeID)
 	_, err := v.client.DeleteVolume(&ec2.DeleteVolumeInput{VolumeId: v.volumeID})
 	if err != nil {
@@ -73,7 +74,7 @@ func (v Volume2Encrypt) DeleteVolume() error {
 }
 
 // EncryptVolume will produce an encrypted version of the volume
-func (v Volume2Encrypt) EncryptVolume() (*ec2.Volume, error) {
+func (v eBSVolumeToEncrypt) EncryptVolume() (*ec2.Volume, error) {
 	log.Println("--- Start encryption process for volume " + *v.volumeID)
 	encrypted := true
 	snapshot, err := v.takeSnapshot()
@@ -116,18 +117,18 @@ func (v Volume2Encrypt) EncryptVolume() (*ec2.Volume, error) {
 	}
 
 	// Before ends, delete the temporary snapshot
-	v.client.DeleteSnapshot(&ec2.DeleteSnapshotInput{SnapshotId: snapshot.SnapshotId})
+	_, _ = v.client.DeleteSnapshot(&ec2.DeleteSnapshotInput{SnapshotId: snapshot.SnapshotId})
 
 	return volume, nil
 }
 
 // IsEncrypted will returns true if the given volume is already encrypted
-func (v Volume2Encrypt) IsEncrypted() bool {
+func (v eBSVolumeToEncrypt) IsEncrypted() bool {
 	return *v.describe.Encrypted
 }
 
 // New returns a well contruct EC2Instance object instance
-func New(session *session.Session, volumeID string, kmsKeyID string) (*Volume2Encrypt, error) {
+func New(session *session.Session, volumeID string, kmsKeyID string) (*eBSVolumeToEncrypt, error) {
 
 	// Trying to describe the given instance as security mechanism (instance is exists ? credentials are ok ?)
 	client := ec2.New(session)
@@ -135,10 +136,10 @@ func New(session *session.Session, volumeID string, kmsKeyID string) (*Volume2En
 	describe, err := client.DescribeVolumes(input)
 	if err != nil {
 		log.Fatal("--- Cannot get information from volume " + volumeID)
-		return &Volume2Encrypt{}, err
+		return &eBSVolumeToEncrypt{}, err
 	}
 
-	volume := &Volume2Encrypt{
+	volume := &eBSVolumeToEncrypt{
 		volumeID: aws.String(volumeID),
 		client:   client,
 		describe: describe.Volumes[0],
