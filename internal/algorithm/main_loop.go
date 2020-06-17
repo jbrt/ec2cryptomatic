@@ -15,26 +15,26 @@ import (
 func EncryptInstance(instanceID, region, kmsKeyAlias string, sourceDiscard bool) error {
 	fmt.Print("\t\t-=[ EC2Cryptomatic ]=-\n")
 
-	session, err := session.NewSession(&aws.Config{Region: aws.String(region)})
+	awsSession, err := session.NewSession(&aws.Config{Region: aws.String(region)})
 	if err != nil {
-		return errors.New("Cannot create an AWS session object: " + err.Error())
+		return errors.New("Cannot create an AWS awsSession object: " + err.Error())
 	}
 
 	log.Println("Let's encrypt instance " + instanceID)
-	ec2, instanceError := instance.New(session, instanceID)
+	ec2, instanceError := instance.New(awsSession, instanceID)
 	if instanceError != nil {
 		return instanceError
 	}
 
 	if !ec2.IsStopped() || !ec2.IsSupportsEncryptedVolumes() {
-		return errors.New("Instance must be stopped and compatible with EBS encryption")
+		return errors.New("instance must be stopped and compatible with EBS encryption")
 	}
 
 	actionDone := false
 	for _, ebsVolume := range ec2.GetEBSVolumes() {
 		log.Println("-- Beginning work on volume " + *ebsVolume.Ebs.VolumeId)
 
-		sourceVolume, volumeError := volume.New(session, *ebsVolume.Ebs.VolumeId, "alias/aws/ebs")
+		sourceVolume, volumeError := volume.New(awsSession, *ebsVolume.Ebs.VolumeId, "alias/aws/ebs")
 		if volumeError != nil {
 			return errors.New("Problem with volume initialization: " + volumeError.Error())
 		}
@@ -46,7 +46,7 @@ func EncryptInstance(instanceID, region, kmsKeyAlias string, sourceDiscard bool)
 
 		encryptedVolume, encryptedVolumeError := sourceVolume.EncryptVolume()
 		if encryptedVolumeError != nil {
-			log.Println("Problem while encrypting volume: %s (%s)", *ebsVolume.Ebs.VolumeId, encryptedVolumeError.Error())
+			log.Printf("Problem while encrypting volume: %s (%s)\n", *ebsVolume.Ebs.VolumeId, encryptedVolumeError.Error())
 			continue
 		}
 
@@ -57,7 +57,7 @@ func EncryptInstance(instanceID, region, kmsKeyAlias string, sourceDiscard bool)
 		}
 
 		if sourceDiscard {
-			sourceVolume.DeleteVolume()
+			_ = sourceVolume.DeleteVolume()
 		}
 		actionDone = true
 	}

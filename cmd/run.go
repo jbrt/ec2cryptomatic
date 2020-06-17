@@ -47,9 +47,9 @@ var runCmd = &cobra.Command{
 		region, _ := cmd.Flags().GetString("region")
 		discard, _ := cmd.Flags().GetBool("discard")
 
-		error := algorithm.EncryptInstance(instanceID, region, kms, discard)
-		if error != nil {
-			fmt.Println("/!\\ " + error.Error())
+		errorAlgorithm := algorithm.EncryptInstance(instanceID, region, kms, discard)
+		if errorAlgorithm != nil {
+			fmt.Println("/!\\ " + errorAlgorithm.Error())
 			os.Exit(1)
 		}
 	},
@@ -62,7 +62,7 @@ func init() {
 	runCmd.Flags().StringVarP(&kmsKey, "kmskey", "k", "alias/aws/ebs", "KMS key alias name")
 	runCmd.Flags().StringVarP(&region, "region", "r", "", "AWS region (required)")
 	runCmd.Flags().BoolP("discard", "d", false, "Discard source volumes after encryption process (default: false)")
-	runCmd.MarkFlagRequired("instance")
-	runCmd.MarkFlagRequired("region")
+	_ = runCmd.MarkFlagRequired("instance")
+	_ = runCmd.MarkFlagRequired("region")
 
 }

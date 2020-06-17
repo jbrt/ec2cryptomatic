@@ -12,7 +12,7 @@ import (
 )
 
 // ec2Instance is the main type of that package. Will be returned by new.
-// It contains all data relevent for an ec2instance
+// It contains all data relevant for an ec2instance
 type ec2Instance struct {
 	instanceID *string
 	client     *ec2.EC2
@@ -26,23 +26,21 @@ func (e ec2Instance) GetEBSVolumes() []*ec2.InstanceBlockDeviceMapping {
 
 // IsStopped will check if the instance is correcly stopped
 func (e ec2Instance) IsStopped() bool {
-	stopped := true
 	if *e.describe.State.Name != "stopped" {
-		return !stopped
+		return false
 	}
-	return stopped
+	return true
 }
 
 // IsSupportsEncryptedVolumes will check if the instance supports EBS encrypted volumes (not all instances types support that).
 func (e ec2Instance) IsSupportsEncryptedVolumes() bool {
-	compatible := true
 	unsupportedInstanceTypes := []string{"c1.", "m1.", "m2.", "t1."}
 	for _, instance := range unsupportedInstanceTypes {
 		if strings.HasPrefix(*e.describe.InstanceType, instance) {
-			return !compatible
+			return false
 		}
 	}
-	return compatible
+	return true
 
 }
 
@@ -57,6 +55,7 @@ func (e ec2Instance) StartInstance() error {
 	return nil
 }
 
+//SwapBlockDevice will swap two EBS volumes from an EC2 instance
 func (e ec2Instance) SwapBlockDevice(source *ec2.InstanceBlockDeviceMapping, target *ec2.Volume) error {
 	detach := &ec2.DetachVolumeInput{VolumeId: aws.String(*source.Ebs.VolumeId)}
 	_, errDetach := e.client.DetachVolume(detach)
@@ -112,7 +111,7 @@ func (e ec2Instance) SwapBlockDevice(source *ec2.InstanceBlockDeviceMapping, tar
 	return nil
 }
 
-// New returns a well contruct EC2Instance object instance
+// New returns a well construct EC2Instance object instance
 func New(session *session.Session, instanceID string) (*ec2Instance, error) {
 
 	// Trying to describe the given instance as security mechanism (instance is exists ? credentials are ok ?)
