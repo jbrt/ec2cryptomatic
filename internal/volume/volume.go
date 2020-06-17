@@ -23,7 +23,6 @@ type eBSVolumeToEncrypt struct {
 func (v eBSVolumeToEncrypt) getTagSpecifications() []*ec2.TagSpecification {
 	resourceType := "volume"
 	var tags []*ec2.Tag
-	//tags := []*ec2.Tag{}
 
 	if v.describe.Tags == nil {
 		return nil
@@ -42,7 +41,7 @@ func (v eBSVolumeToEncrypt) getTagSpecifications() []*ec2.TagSpecification {
 // takeSnapshot will take a snapshot from the given volume & wait until this snapshot is completed
 func (v eBSVolumeToEncrypt) takeSnapshot() (*ec2.Snapshot, error) {
 	snapShotInput := &ec2.CreateSnapshotInput{
-		Description: aws.String("EC2Cryptomatict temporary snapshot for " + *v.volumeID),
+		Description: aws.String("EC2Cryptomatic temporary snapshot for " + *v.volumeID),
 		VolumeId:    v.describe.VolumeId,
 	}
 
@@ -127,7 +126,7 @@ func (v eBSVolumeToEncrypt) IsEncrypted() bool {
 	return *v.describe.Encrypted
 }
 
-// New returns a well contruct EC2Instance object instance
+// New returns a well construct EC2Instance object instance
 func New(session *session.Session, volumeID string, kmsKeyID string) (*eBSVolumeToEncrypt, error) {
 
 	// Trying to describe the given instance as security mechanism (instance is exists ? credentials are ok ?)
