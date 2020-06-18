@@ -24,7 +24,7 @@ func (e ec2Instance) GetEBSVolumes() []*ec2.InstanceBlockDeviceMapping {
 	return e.describe.BlockDeviceMappings
 }
 
-// IsStopped will check if the instance is correcly stopped
+// IsStopped will check if the instance is correctly stopped
 func (e ec2Instance) IsStopped() bool {
 	if *e.describe.State.Name != "stopped" {
 		return false

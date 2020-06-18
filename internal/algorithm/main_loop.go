@@ -34,7 +34,7 @@ func EncryptInstance(instanceID, region, kmsKeyAlias string, sourceDiscard bool)
 	for _, ebsVolume := range ec2.GetEBSVolumes() {
 		log.Println("-- Beginning work on volume " + *ebsVolume.Ebs.VolumeId)
 
-		sourceVolume, volumeError := volume.New(awsSession, *ebsVolume.Ebs.VolumeId, "alias/aws/ebs")
+		sourceVolume, volumeError := volume.New(awsSession, *ebsVolume.Ebs.VolumeId, kmsKeyAlias)
 		if volumeError != nil {
 			return errors.New("Problem with volume initialization: " + volumeError.Error())
 		}
