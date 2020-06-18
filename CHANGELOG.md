@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.1
+
+- Fixing code typos
+- Fixing KMS bug (given KMS key wasn't used only default AWS KMS key)
+
 ## 2.0.0
 
 - Refactoring this projet from Python to Golang. Why ? Just for fun & rampup for me on Golang language.
