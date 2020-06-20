@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.2
+
+- Adding option for choosing to restart or not an instance after encryption
+- Code refactoring
+
 ## 2.0.1
 
 - Fixing code typos
