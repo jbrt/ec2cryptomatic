@@ -16,19 +16,18 @@ This tool let you :
 - Preserve the original volume or not as an option (thank to @cobaltjacket)
 - Start each instance after encrypting is complete (thank to @dshah22)
 
-For your information, the workflow used to encrypt a EBS volume is:
+For your information, the workflow used to encrypt an EBS volume is:
 - Take a snapshot from the original volume
-- Copy and encrypt that snapshot
-- Create a new volume from that encrypted snapshot
-- Swap the volumes
-- Do some cleaning
+- Create a new volume encrypted from that snapshot
+- Swap volumes
+- Delete source unencrypted volumes (if requested)
 
 ## Note about version 2.x
 
 Since version 1, EC2Cryptomatic was coded in Python. This version 2 is a 
 complete rewriting of this tool in Golang.
 
-Why Golang instead of Python ? Principaly because of fun and for training for 
+Why Golang instead of Python ? Principally because of fun and for training for 
 the author on that language.
 
 Golang is also a good option for a CLI tool like this (more portable than 
