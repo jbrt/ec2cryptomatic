@@ -23,16 +23,14 @@ package cmd
 
 import (
 	"fmt"
-	"os"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"log"
+
 
 	"github.com/jbrt/ec2cryptomatic/internal/algorithm"
+	"github.com/jbrt/ec2cryptomatic/internal/ec2instance"
 	"github.com/spf13/cobra"
-)
-
-var (
-	instance string
-	kmsKey   string
-	region   string
 )
 
 // runCmd represents the run command
@@ -43,26 +41,40 @@ var runCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		instanceID, _ := cmd.Flags().GetString("instance")
-		kms, _ := cmd.Flags().GetString("kmskey")
+		kms, _ := cmd.Flags().GetString("kmsKeyAlias")
 		region, _ := cmd.Flags().GetString("region")
 		discard, _ := cmd.Flags().GetBool("discard")
+		startInstance, _ := cmd.Flags().GetBool("start")
 
-		errorAlgorithm := algorithm.EncryptInstance(instanceID, region, kms, discard)
+		fmt.Print("\t\t-=[ EC2Cryptomatic ]=-\n")
+
+		awsSession, err := session.NewSession(&aws.Config{Region: aws.String(region)})
+		if err != nil {
+			log.Fatalln("Cannot create an AWS awsSession object: " + err.Error())
+		}
+
+		ec2Instance, instanceError := ec2instance.New(awsSession, instanceID)
+		if instanceError != nil {
+			log.Fatalln(instanceError)
+		}
+
+		errorAlgorithm := algorithm.EncryptInstance(ec2Instance, kms, discard, startInstance)
 		if errorAlgorithm != nil {
-			fmt.Println("/!\\ " + errorAlgorithm.Error())
-			os.Exit(1)
+			log.Fatalln("/!\\ " + errorAlgorithm.Error())
 		}
 	},
 }
 
 func init() {
+	var awsRegion, instanceID, kmsKeyAlias string
+
 	rootCmd.AddCommand(runCmd)
 
-	runCmd.Flags().StringVarP(&instance, "instance", "i", "", "Instance ID of instance of encrypt (required)")
-	runCmd.Flags().StringVarP(&kmsKey, "kmskey", "k", "alias/aws/ebs", "KMS key alias name")
-	runCmd.Flags().StringVarP(&region, "region", "r", "", "AWS region (required)")
+	runCmd.Flags().StringVarP(&instanceID, "instance", "i", "", "Instance ID of instance of encrypt (required)")
+	runCmd.Flags().StringVarP(&kmsKeyAlias, "kmsKeyAlias", "k", "alias/aws/ebs", "KMS key alias name")
+	runCmd.Flags().StringVarP(&awsRegion, "region", "r", "", "AWS region (required)")
 	runCmd.Flags().BoolP("discard", "d", false, "Discard source volumes after encryption process (default: false)")
+	runCmd.Flags().BoolP("start", "s", false, "Start instance after volume encryption (default: false)")
 	_ = runCmd.MarkFlagRequired("instance")
 	_ = runCmd.MarkFlagRequired("region")
-
 }
