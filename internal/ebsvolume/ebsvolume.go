@@ -1,4 +1,4 @@
-package volume
+package ebsvolume
 
 import (
 	"log"
@@ -10,15 +10,15 @@ import (
 	"github.com/jbrt/ec2cryptomatic/constants"
 )
 
-// EBSVolumeToEncrypt contains all needed information for encrypting an EBS volume
-type EBSVolumeToEncrypt struct {
+// VolumeToEncrypt contains all needed information for encrypting an EBS volume
+type VolumeToEncrypt struct {
 	volumeID *string
 	client   *ec2.EC2
 	describe *ec2.Volume
 }
 
 // getTagSpecifications will returns tags from volumes by filtering out AWS specific tags (aws:xxx)
-func (v EBSVolumeToEncrypt) getTagSpecifications() []*ec2.TagSpecification {
+func (v VolumeToEncrypt) getTagSpecifications() []*ec2.TagSpecification {
 	resourceType := "volume"
 	var tags []*ec2.Tag
 
@@ -36,16 +36,16 @@ func (v EBSVolumeToEncrypt) getTagSpecifications() []*ec2.TagSpecification {
 
 }
 
-// takeSnapshot will take a snapshot from the given volume & wait until this snapshot is completed
-func (v EBSVolumeToEncrypt) takeSnapshot() (*ec2.Snapshot, error) {
+// takeSnapshot will take a snapshot from the given EBS volume & wait until this snapshot is completed
+func (v VolumeToEncrypt) takeSnapshot() (*ec2.Snapshot, error) {
 	snapShotInput := &ec2.CreateSnapshotInput{
 		Description: aws.String("EC2Cryptomatic temporary snapshot for " + *v.volumeID),
 		VolumeId:    v.describe.VolumeId,
 	}
 
-	snapshot, err := v.client.CreateSnapshot(snapShotInput)
-	if err != nil {
-		return nil, err
+	snapshot, errSnapshot := v.client.CreateSnapshot(snapShotInput)
+	if errSnapshot != nil {
+		return nil, errSnapshot
 	}
 
 	waiterMaxAttempts := request.WithWaiterMaxAttempts(constants.VolumeMaxAttempts)
@@ -60,24 +60,25 @@ func (v EBSVolumeToEncrypt) takeSnapshot() (*ec2.Snapshot, error) {
 	return snapshot, nil
 }
 
-// DeleteVolume will delete the given volume
-func (v EBSVolumeToEncrypt) DeleteVolume() error {
+// DeleteVolume will delete the given EBS volume
+func (v VolumeToEncrypt) DeleteVolume() error {
 	log.Println("--- Delete volume " + *v.volumeID)
-	_, err := v.client.DeleteVolume(&ec2.DeleteVolumeInput{VolumeId: v.volumeID})
-	if err != nil {
-		return err
+	_, errDelete := v.client.DeleteVolume(&ec2.DeleteVolumeInput{VolumeId: v.volumeID})
+	if errDelete != nil {
+		return errDelete
 	}
 	return nil
 }
 
-// EncryptVolume will produce an encrypted version of the volume
-func (v EBSVolumeToEncrypt) EncryptVolume(kmsKeyID string) (*ec2.Volume, error) {
+// EncryptVolume will produce an encrypted version of the EBS volume
+func (v VolumeToEncrypt) EncryptVolume(kmsKeyID string) (*ec2.Volume, error) {
 	log.Println("--- Start encryption process for volume " + *v.volumeID)
 	encrypted := true
-	snapshot, err := v.takeSnapshot()
-	if err != nil {
-		return nil, err
+	snapshot, errSnapshot := v.takeSnapshot()
+	if errSnapshot != nil {
+		return nil, errSnapshot
 	}
+
 	volumeInput := &ec2.CreateVolumeInput{
 		AvailabilityZone: aws.String(*v.describe.AvailabilityZone),
 		SnapshotId:       aws.String(*snapshot.SnapshotId),
@@ -92,15 +93,15 @@ func (v EBSVolumeToEncrypt) EncryptVolume(kmsKeyID string) (*ec2.Volume, error) 
 		volumeInput.TagSpecifications = tagsWithoutAwsDedicatedTags
 	}
 
-	// If volume is IO, let's get the IOPS parameter
+	// If EBS volume is IO, let's get the IOPs parameter
 	if strings.HasPrefix(*v.describe.VolumeType, "io") {
-		log.Println("--- This volumes is IO one let's set IOPS to ", *v.describe.Iops)
+		log.Println("--- This volumes is IO one let's set IOPs to ", *v.describe.Iops)
 		volumeInput.Iops = aws.Int64(*v.describe.Iops)
 	}
 
-	volume, err := v.client.CreateVolume(volumeInput)
-	if err != nil {
-		return nil, err
+	volume, errVolume := v.client.CreateVolume(volumeInput)
+	if errVolume != nil {
+		return nil, errVolume
 	}
 
 	waiterMaxAttempts := request.WithWaiterMaxAttempts(constants.VolumeMaxAttempts)
@@ -119,23 +120,23 @@ func (v EBSVolumeToEncrypt) EncryptVolume(kmsKeyID string) (*ec2.Volume, error) 
 	return volume, nil
 }
 
-// IsEncrypted will returns true if the given volume is already encrypted
-func (v EBSVolumeToEncrypt) IsEncrypted() bool {
+// IsEncrypted will returns true if the given EBS volume is already encrypted
+func (v VolumeToEncrypt) IsEncrypted() bool {
 	return *v.describe.Encrypted
 }
 
-// New returns a well construct EC2Instance object instance
-func New(ec2Client *ec2.EC2, volumeID string) (*EBSVolumeToEncrypt, error) {
+// New returns a well construct EC2Instance object ec2instance
+func New(ec2Client *ec2.EC2, volumeID string) (*VolumeToEncrypt, error) {
 
-	// Trying to describe the given instance as security mechanism (instance is exists ? credentials are ok ?)
+	// Trying to describe the given ec2instance as security mechanism (ec2instance is exists ? credentials are ok ?)
 	input := &ec2.DescribeVolumesInput{VolumeIds: []*string{aws.String(volumeID)}}
-	describe, err := ec2Client.DescribeVolumes(input)
-	if err != nil {
+	describe, errDescribe := ec2Client.DescribeVolumes(input)
+	if errDescribe != nil {
 		log.Println("--- Cannot get information from volume " + volumeID)
-		return nil, err
+		return nil, errDescribe
 	}
 
-	volume := &EBSVolumeToEncrypt{
+	volume := &VolumeToEncrypt{
 		volumeID: aws.String(volumeID),
 		client:   ec2Client,
 		describe: describe.Volumes[0],
