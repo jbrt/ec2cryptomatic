@@ -26,7 +26,7 @@ func (e Ec2Instance) GetEBSMappedVolumes() []*ec2.InstanceBlockDeviceMapping {
 }
 
 // GetEBSVolume returns a specific EBS volume with high level methods
-func (e Ec2Instance) GetEBSVolume(volumeID string) (*ebsvolume.VolumeToEncrypt, error){
+func (e Ec2Instance) GetEBSVolume(volumeID string) (*ebsvolume.VolumeToEncrypt, error) {
 	ebsVolume, volumeError := ebsvolume.New(e.ec2client, volumeID)
 	if volumeError != nil {
 		return nil, volumeError
