@@ -27,7 +27,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"log"
 
-
 	"github.com/jbrt/ec2cryptomatic/internal/algorithm"
 	"github.com/jbrt/ec2cryptomatic/internal/ec2instance"
 	"github.com/spf13/cobra"
