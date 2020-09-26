@@ -24,6 +24,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"log"
 
@@ -40,7 +41,7 @@ var runCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		instanceID, _ := cmd.Flags().GetString("instance")
-		kms, _ := cmd.Flags().GetString("kmsKeyAlias")
+		kmsAlias, _ := cmd.Flags().GetString("kmsKeyAlias")
 		region, _ := cmd.Flags().GetString("region")
 		discard, _ := cmd.Flags().GetBool("discard")
 		startInstance, _ := cmd.Flags().GetBool("start")
@@ -52,12 +53,18 @@ var runCmd = &cobra.Command{
 			log.Fatalln("Cannot create an AWS awsSession object: " + err.Error())
 		}
 
+		kmsService := kms.New(awsSession)
+		kmsInput := &kms.DescribeKeyInput{KeyId: aws.String(kmsAlias)}
+		_, errorKmsKey := kmsService.DescribeKey(kmsInput); if errorKmsKey != nil {
+			log.Fatalln("Error with this key: " + errorKmsKey.Error())
+		}
+
 		ec2Instance, instanceError := ec2instance.New(awsSession, instanceID)
 		if instanceError != nil {
 			log.Fatalln(instanceError)
 		}
 
-		errorAlgorithm := algorithm.EncryptInstance(ec2Instance, kms, discard, startInstance)
+		errorAlgorithm := algorithm.EncryptInstance(ec2Instance, kmsAlias, discard, startInstance)
 		if errorAlgorithm != nil {
 			log.Fatalln("/!\\ " + errorAlgorithm.Error())
 		}
@@ -70,7 +77,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 
 	runCmd.Flags().StringVarP(&instanceID, "instance", "i", "", "Instance ID of instance of encrypt (required)")
-	runCmd.Flags().StringVarP(&kmsKeyAlias, "kmsKeyAlias", "k", "alias/aws/ebs", "KMS key alias name")
+	runCmd.Flags().StringVarP(&kmsKeyAlias, "kmsKeyAlias", "k", "alias/aws/ebs", "KMS key alias name with format alias/NAME")
 	runCmd.Flags().StringVarP(&awsRegion, "region", "r", "", "AWS region (required)")
 	runCmd.Flags().BoolP("discard", "d", false, "Discard source volumes after encryption process (default: false)")
 	runCmd.Flags().BoolP("start", "s", false, "Start instance after volume encryption (default: false)")
