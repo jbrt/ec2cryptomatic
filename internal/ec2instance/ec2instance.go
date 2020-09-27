@@ -12,6 +12,8 @@ import (
 	"github.com/jbrt/ec2cryptomatic/internal/ebsvolume"
 )
 
+var unsupportedInstanceTypes = []string{"c1.", "m1.", "m2.", "t1."}
+
 // Ec2Instance is the main type of that package. Will be returned by new.
 // It contains all data relevant for an ec2instance
 type Ec2Instance struct {
@@ -27,8 +29,7 @@ func (e Ec2Instance) GetEBSMappedVolumes() []*ec2.InstanceBlockDeviceMapping {
 
 // GetEBSVolume returns a specific EBS volume with high level methods
 func (e Ec2Instance) GetEBSVolume(volumeID string) (*ebsvolume.VolumeToEncrypt, error) {
-	ebsVolume, volumeError := ebsvolume.New(e.ec2client, volumeID)
-	if volumeError != nil {
+	ebsVolume, volumeError := ebsvolume.New(e.ec2client, volumeID);	if volumeError != nil {
 		return nil, volumeError
 	}
 	return ebsVolume, nil
@@ -44,7 +45,6 @@ func (e Ec2Instance) IsStopped() bool {
 
 // IsSupportsEncryptedVolumes will check if the ec2instance supports EBS encrypted volumes (not all instances types support that).
 func (e Ec2Instance) IsSupportsEncryptedVolumes() bool {
-	unsupportedInstanceTypes := []string{"c1.", "m1.", "m2.", "t1."}
 	for _, instance := range unsupportedInstanceTypes {
 		if strings.HasPrefix(*e.describeInstance.InstanceType, instance) {
 			return false
@@ -57,8 +57,7 @@ func (e Ec2Instance) IsSupportsEncryptedVolumes() bool {
 func (e Ec2Instance) StartInstance() error {
 	log.Println("-- Start ec2instance " + *e.InstanceID)
 	input := &ec2.StartInstancesInput{InstanceIds: []*string{aws.String(*e.InstanceID)}}
-	_, errStart := e.ec2client.StartInstances(input)
-	if errStart != nil {
+	if _, errStart := e.ec2client.StartInstances(input); errStart != nil {
 		return errStart
 	}
 	return nil
@@ -67,8 +66,7 @@ func (e Ec2Instance) StartInstance() error {
 //SwapBlockDevice will swap two EBS volumes from an EC2 ec2instance
 func (e Ec2Instance) SwapBlockDevice(source *ec2.InstanceBlockDeviceMapping, target *ec2.Volume) error {
 	detach := &ec2.DetachVolumeInput{VolumeId: aws.String(*source.Ebs.VolumeId)}
-	_, errDetach := e.ec2client.DetachVolume(detach)
-	if errDetach != nil {
+	if _, errDetach := e.ec2client.DetachVolume(detach); errDetach != nil {
 		return errDetach
 	}
 
@@ -88,8 +86,7 @@ func (e Ec2Instance) SwapBlockDevice(source *ec2.InstanceBlockDeviceMapping, tar
 		VolumeId:   aws.String(*target.VolumeId),
 	}
 
-	_, errAttach := e.ec2client.AttachVolume(attach)
-	if errAttach != nil {
+	if _, errAttach := e.ec2client.AttachVolume(attach); errAttach != nil {
 		return errAttach
 	}
 
@@ -110,8 +107,7 @@ func (e Ec2Instance) SwapBlockDevice(source *ec2.InstanceBlockDeviceMapping, tar
 
 		requestModify, _ := e.ec2client.ModifyInstanceAttributeRequest(&attributeInput)
 
-		errorRequest := requestModify.Send()
-		if errorRequest != nil {
+		if errorRequest := requestModify.Send(); errorRequest != nil {
 			return errorRequest
 		}
 
@@ -122,16 +118,15 @@ func (e Ec2Instance) SwapBlockDevice(source *ec2.InstanceBlockDeviceMapping, tar
 
 // New returns a well construct EC2Instance object ec2instance
 func New(session *session.Session, instanceID string) (*Ec2Instance, error) {
-	log.Println("Let's encrypt ec2instance " + instanceID)
+	log.Println("Let's encrypt EC2 instance " + instanceID)
 
 	// Trying to describeInstance the given ec2instance as security mechanism (ec2instance is exists ? credentials are ok ?)
 	ec2client := ec2.New(session)
-	input := &ec2.DescribeInstancesInput{InstanceIds: []*string{aws.String(instanceID)}}
+	ec2Input := &ec2.DescribeInstancesInput{InstanceIds: []*string{aws.String(instanceID)}}
 
-	describe, errDescribe := ec2client.DescribeInstances(input)
-	if errDescribe != nil {
-		log.Println("-- Cannot find EC2 ec2instance " + instanceID)
-		return &Ec2Instance{}, errDescribe
+	describe, errDescribe := ec2client.DescribeInstances(ec2Input); if errDescribe != nil {
+		log.Println("-- Cannot find EC2 instance " + instanceID)
+		return nil, errDescribe
 	}
 
 	instance := &Ec2Instance{

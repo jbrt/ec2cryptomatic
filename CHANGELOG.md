@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0
+
+- Authorize encryption of already encrypted volumes (key migration)
+
+## 2.0.3
+
+- Adding a security check on KMS alias
+
 ## 2.0.2
 
 - Adding option for choosing to restart or not an instance after encryption

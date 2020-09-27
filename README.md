@@ -11,6 +11,7 @@ Encrypt EBS volumes from AWS EC2 instances
 
 This tool let you :
 - Encrypt all the EBS volumes for an instance
+- If volumes already encrypted, re-encrypt these with the given key
 - Duplicate all the source tags to the target
 - Apply DeleteOnTermination flag if needs
 - Preserve the original volume or not as an option (thank to @cobaltjacket)
