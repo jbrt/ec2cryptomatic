@@ -43,8 +43,7 @@ func (v VolumeToEncrypt) takeSnapshot() (*ec2.Snapshot, error) {
 		VolumeId:    v.describe.VolumeId,
 	}
 
-	snapshot, errSnapshot := v.client.CreateSnapshot(snapShotInput)
-	if errSnapshot != nil {
+	snapshot, errSnapshot := v.client.CreateSnapshot(snapShotInput); if errSnapshot != nil {
 		return nil, errSnapshot
 	}
 
@@ -62,9 +61,8 @@ func (v VolumeToEncrypt) takeSnapshot() (*ec2.Snapshot, error) {
 
 // DeleteVolume will delete the given EBS volume
 func (v VolumeToEncrypt) DeleteVolume() error {
-	log.Println("--- Delete volume " + *v.volumeID)
-	_, errDelete := v.client.DeleteVolume(&ec2.DeleteVolumeInput{VolumeId: v.volumeID})
-	if errDelete != nil {
+	log.Println("---> Delete volume " + *v.volumeID)
+	if _, errDelete := v.client.DeleteVolume(&ec2.DeleteVolumeInput{VolumeId: v.volumeID}); errDelete != nil {
 		return errDelete
 	}
 	return nil
@@ -72,10 +70,9 @@ func (v VolumeToEncrypt) DeleteVolume() error {
 
 // EncryptVolume will produce an encrypted version of the EBS volume
 func (v VolumeToEncrypt) EncryptVolume(kmsKeyID string) (*ec2.Volume, error) {
-	log.Println("--- Start encryption process for volume " + *v.volumeID)
+	log.Println("---> Start encryption process for volume " + *v.volumeID)
 	encrypted := true
-	snapshot, errSnapshot := v.takeSnapshot()
-	if errSnapshot != nil {
+	snapshot, errSnapshot := v.takeSnapshot(); if errSnapshot != nil {
 		return nil, errSnapshot
 	}
 
@@ -88,19 +85,17 @@ func (v VolumeToEncrypt) EncryptVolume(kmsKeyID string) (*ec2.Volume, error) {
 	}
 
 	// Adding tags if needed
-	tagsWithoutAwsDedicatedTags := v.getTagSpecifications()
-	if tagsWithoutAwsDedicatedTags != nil {
+	if tagsWithoutAwsDedicatedTags := v.getTagSpecifications(); tagsWithoutAwsDedicatedTags != nil {
 		volumeInput.TagSpecifications = tagsWithoutAwsDedicatedTags
 	}
 
 	// If EBS volume is IO, let's get the IOPs parameter
 	if strings.HasPrefix(*v.describe.VolumeType, "io") {
-		log.Println("--- This volumes is IO one let's set IOPs to ", *v.describe.Iops)
+		log.Println("---> This volumes is IO one let's set IOPs to ", *v.describe.Iops)
 		volumeInput.Iops = aws.Int64(*v.describe.Iops)
 	}
 
-	volume, errVolume := v.client.CreateVolume(volumeInput)
-	if errVolume != nil {
+	volume, errVolume := v.client.CreateVolume(volumeInput); if errVolume != nil {
 		return nil, errVolume
 	}
 
@@ -127,12 +122,10 @@ func (v VolumeToEncrypt) IsEncrypted() bool {
 
 // New returns a well construct EC2Instance object ec2instance
 func New(ec2Client *ec2.EC2, volumeID string) (*VolumeToEncrypt, error) {
-
 	// Trying to describe the given ec2instance as security mechanism (ec2instance is exists ? credentials are ok ?)
-	input := &ec2.DescribeVolumesInput{VolumeIds: []*string{aws.String(volumeID)}}
-	describe, errDescribe := ec2Client.DescribeVolumes(input)
-	if errDescribe != nil {
-		log.Println("--- Cannot get information from volume " + volumeID)
+	volumeInput := &ec2.DescribeVolumesInput{VolumeIds: []*string{aws.String(volumeID)}}
+	describe, errDescribe := ec2Client.DescribeVolumes(volumeInput); if errDescribe != nil {
+		log.Println("---> Cannot get information from volume " + volumeID)
 		return nil, errDescribe
 	}
 

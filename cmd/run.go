@@ -48,24 +48,21 @@ var runCmd = &cobra.Command{
 
 		fmt.Print("\t\t-=[ EC2Cryptomatic ]=-\n")
 
-		awsSession, err := session.NewSession(&aws.Config{Region: aws.String(region)})
-		if err != nil {
+		awsSession, err := session.NewSession(&aws.Config{Region: aws.String(region)});	if err != nil {
 			log.Fatalln("Cannot create an AWS awsSession object: " + err.Error())
 		}
 
 		kmsService := kms.New(awsSession)
 		kmsInput := &kms.DescribeKeyInput{KeyId: aws.String(kmsAlias)}
-		_, errorKmsKey := kmsService.DescribeKey(kmsInput); if errorKmsKey != nil {
+		if _, errorKmsKey := kmsService.DescribeKey(kmsInput); errorKmsKey != nil {
 			log.Fatalln("Error with this key: " + errorKmsKey.Error())
 		}
 
-		ec2Instance, instanceError := ec2instance.New(awsSession, instanceID)
-		if instanceError != nil {
+		ec2Instance, instanceError := ec2instance.New(awsSession, instanceID); if instanceError != nil {
 			log.Fatalln(instanceError)
 		}
 
-		errorAlgorithm := algorithm.EncryptInstance(ec2Instance, kmsAlias, discard, startInstance)
-		if errorAlgorithm != nil {
+		if errorAlgorithm := algorithm.EncryptInstance(ec2Instance, kmsAlias, discard, startInstance); errorAlgorithm != nil {
 			log.Fatalln("/!\\ " + errorAlgorithm.Error())
 		}
 	},

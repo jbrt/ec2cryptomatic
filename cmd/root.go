@@ -51,9 +51,6 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// TODO: Not yet implemented
-	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.ec2cryptomatic.yaml)")
-
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -63,8 +60,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := homedir.Dir()
-		if err != nil {
+		home, err := homedir.Dir();	if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
