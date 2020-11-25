@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1
+
+- Update SSL/TLS certificates into Docker image
+
 ## 2.1.0
 
 - Authorize encryption of already encrypted volumes (key migration)
