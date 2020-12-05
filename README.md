@@ -2,6 +2,7 @@
 
 [![Github Action](https://github.com/jbrt/ec2cryptomatic/workflows/publish-docker-image/badge.svg)](https://github.com/jbrt/ec2cryptomatic/actions?workflow=publish-docker-image)
 ![Docker Pulls](https://img.shields.io/docker/pulls/jbrt/ec2cryptomatic.svg?label=pulls&logo=docker)
+[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=jbrt_ec2cryptomatic)](https://sonarcloud.io/dashboard?id=jbrt_ec2cryptomatic)
 
 Encrypt EBS volumes from AWS EC2 instances
 
@@ -99,6 +100,15 @@ this repository :
 Or you can use the image already pulled into the official Docker Hub:
 
 `docker pull jbrt/ec2cryptomatic`
+
+## Binaries
+
+If you do not want to use Docker, you can use a binary version (accessible from the release section).
+Versions currently supported:
+
+- Linux (x86_64, ARM)
+- FreeBSD (x86_64, ARM)
+- Windows (x86_64 only)
 
 ## Example
 
