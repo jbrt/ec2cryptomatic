@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.4
+
+- Improving Github Actions pipeline
+
 ## 2.1.1
 
 - Update SSL/TLS certificates into Docker image
