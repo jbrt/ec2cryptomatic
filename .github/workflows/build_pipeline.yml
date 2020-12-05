@@ -1,0 +1,121 @@
+name: EC2Cryptomatic build and deployment
+
+on:
+  - push
+  - pull_request
+
+jobs:
+
+  code_linting:
+    runs-on: ubuntu-latest
+    container:
+      image: cytopia/golint:latest
+      volumes:
+        - /__w/ec2cryptomatic/ec2cryptomatic:/data
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Starting code linting
+        run: golint .
+
+
+  code_testing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting
+          fetch-depth: 0
+      
+      - name: Setup Golang 
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.14' # The Go version to download (if necessary) and use.
+      
+      - name: Run Golang test
+        run: go test .
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      
+      - name: Create Docker image file
+        run: docker build .
+  
+
+  code_compiling:
+    needs: [code_linting, code_testing]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux, windows, freebsd]
+        arch: [amd64, arm]
+        exclude:
+          - os: windows
+            arch: arm
+      fail-fast: true
+    
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Setup Golang 
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.14' # The Go version to download (if necessary) and use.
+      
+      - run: GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o ec2cryptomatic
+
+      - name: Package artefacts 
+        run: zip ec2cryptomatic.${{ matrix.os }}.${{ matrix.arch }}.zip ec2cryptomatic
+      
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ec2cryptomatic.${{ matrix.os }}.${{ matrix.arch }}.zip
+
+
+  code_deploying:
+    needs: [code_linting, code_testing, code_compiling]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/feature/improving_github_actions_wf'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set VERSION variable
+        id: vars
+        run: echo ::set-output name=tag_version::"$(head -1 VERSION)"
+      
+      - name: Download artefacts before uploading
+        uses: actions/download-artifact@v2
+    
+      - name: Create a new release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.vars.outputs.tag_version }}
+          release_name: Release ${{ steps.vars.outputs.tag_version }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
+        id: upload-release-assets
+        uses: dwenegar/upload-release-assets@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ steps.create_release.outputs.id }}
+          path: artifact
+    
+      - run: git checkout ${{ steps.vars.outputs.tag_version }}
+
+      - name: Publish image to Registry with tag of the current version
+        uses: elgohr/Publish-Docker-Github-Action@3.01
+        with:
+          name: jbrt/ec2cryptomatic
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          dockerfile: Dockerfile
+          tags: "latest,${{ steps.vars.outputs.tag_version }}"
+      
