@@ -2,7 +2,7 @@
 
 [![Github Action](https://github.com/jbrt/ec2cryptomatic/workflows/publish-docker-image/badge.svg)](https://github.com/jbrt/ec2cryptomatic/actions?workflow=publish-docker-image)
 ![Docker Pulls](https://img.shields.io/docker/pulls/jbrt/ec2cryptomatic.svg?label=pulls&logo=docker)
-[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=jbrt_ec2cryptomatic)](https://sonarcloud.io/dashboard?id=jbrt_ec2cryptomatic)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jbrt_ec2cryptomatic&metric=alert_status)](https://sonarcloud.io/dashboard?id=jbrt_ec2cryptomatic)
 
 Encrypt EBS volumes from AWS EC2 instances
 
@@ -108,6 +108,7 @@ Versions currently supported:
 
 - Linux (x86_64, ARM)
 - FreeBSD (x86_64, ARM)
+- MacOS/Darwin (x86_64 only)
 - Windows (x86_64 only)
 
 ## Example

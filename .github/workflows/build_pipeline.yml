@@ -1,8 +1,10 @@
 name: EC2Cryptomatic build and deployment
 
 on:
-  - push
-  - pull_request
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 12 1 * *'
 
 jobs:
 
@@ -50,10 +52,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [linux, windows, freebsd]
+        os: [linux, windows, freebsd, darwin]
         arch: [amd64, arm]
         exclude:
           - os: windows
+            arch: arm
+          - os: darwin
             arch: arm
       fail-fast: true
     
@@ -78,7 +82,7 @@ jobs:
   code_deploying:
     needs: [code_linting, code_testing, code_compiling]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: success() && github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v2
       - name: Set VERSION variable
