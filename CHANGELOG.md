@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.3.0
+
+- Adding support of MacOS
+- Pipeline will run every 1st day of the month at 12:00AM
+
 ## 2.2.4
 
 - Improving Github Actions pipeline
