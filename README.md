@@ -46,7 +46,7 @@ EC2Cryptomatic needs the following IAM rights:
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "Stmt1504425390448",
+            "Sid": "EC2CryptomaticPolicy",
             "Action": [
                 "ec2:AttachVolume",
                 "ec2:CopyImage",
@@ -61,7 +61,8 @@ EC2Cryptomatic needs the following IAM rights:
                 "ec2:DescribeVolumes",
                 "ec2:DetachVolume",
                 "ec2:ModifyInstanceAttribute",
-                "ec2:StartInstances"
+                "ec2:StartInstances",
+                "kms:DescribeKey"
             ],
             "Effect": "Allow",
             "Resource": "*"
