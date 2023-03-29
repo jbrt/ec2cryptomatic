@@ -111,7 +111,7 @@ jobs:
           assets_path: artifact/
 
       - name: Publish image to Docker Hub Registry
-        uses: elgohr/Publish-Docker-Github-Action@3.01
+        uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: jbrt/ec2cryptomatic
           username: ${{ secrets.DOCKER_USERNAME }}
